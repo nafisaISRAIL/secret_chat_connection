@@ -5,8 +5,8 @@ import json
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
-HOST = ''
-PORT = ''
+HOST = ""
+PORT = ""
 
 
 async def submit_message(personal_hash, message):
