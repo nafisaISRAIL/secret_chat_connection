@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 async def main(host, port, filepath):
-    reader, writer = await asyncio.open_connection("minechat.dvmn.org", 5000)
+    reader, writer = await asyncio.open_connection(host, port)
     while True:
         line = await reader.readline()
         if not line:
@@ -14,7 +14,7 @@ async def main(host, port, filepath):
         if line:
             date = datetime.now().strftime("%y.%m.%d %H:%M")
             line = f"[{date}] " + line
-            async with aiofiles.open("test.txt", mode="a") as myfile:
+            async with aiofiles.open(filepath, mode="a") as myfile:
                 await myfile.write(line)
                 print(line)
     writer.close()
