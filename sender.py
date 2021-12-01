@@ -23,16 +23,16 @@ async def submit_message(personal_hash, message):
     logging.info("Message was sent")
 
 
-async def authorise(message, nickname=""):
+async def authorise(message, nickname, host, port):
     user_info = None
 
-    info_file = await aiofiles.open("token.txt", mode="r+")
-    user_info = await info_file.read()
-    if user_info == "":
-        user_info = await register(nickname)
-        await info_file.write(user_info.decode())
-        logging.info("The retreived token was saved.")
-    info_file.close()
+    async with aiofiles.open("token.txt", mode="r+") as token_file:
+        user_info = await token_file.read()
+        if not user_info:
+            user_info = await register(nickname, host, port)
+            await token_file.write(user_info.decode())
+            logging.info("The retreived token was saved.")
+
     try:
         user_info_dict = json.loads(user_info)
         await submit_message(user_info_dict["account_hash"], message)
