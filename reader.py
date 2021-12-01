@@ -14,8 +14,8 @@ async def main(host, port, filepath):
         if line:
             date = datetime.now().strftime("%y.%m.%d %H:%M")
             line = f"[{date}] " + line
-            async with aiofiles.open(filepath, mode="a") as myfile:
-                await myfile.write(line)
+            async with aiofiles.open(filepath, mode="a") as file:
+                await file.write(line)
                 print(line)
     writer.close()
 
