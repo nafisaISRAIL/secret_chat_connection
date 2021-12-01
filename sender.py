@@ -5,12 +5,10 @@ import json
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
-HOST = ""
-PORT = ""
 
 
-async def submit_message(personal_hash, message):
-    reader, writer = await connect(personal_hash)
+async def submit_message(personal_hash, message, host, port):
+    reader, writer = await connect(host, port, personal_hash)
 
     for _ in range(2):
         # pass returned authorized user data
@@ -25,23 +23,22 @@ async def submit_message(personal_hash, message):
 
 async def authorise(message, nickname, host, port):
     user_info = None
-
     async with aiofiles.open("token.txt", mode="r+") as token_file:
         user_info = await token_file.read()
         if not user_info:
-            user_info = await register(nickname, host, port)
+            user_info = await register(host, port, nickname)
             await token_file.write(user_info.decode())
             logging.info("The retreived token was saved.")
 
     try:
-        user_info_dict = json.loads(user_info)
-        await submit_message(user_info_dict["account_hash"], message)
+        user_info = json.loads(user_info)
+        await submit_message(user_info["account_hash"], message, host, port)
     except asyncio.CancelledError:
         logging.error("Error occurred while token was retrieving.")
 
 
-async def register(nickname=""):
-    reader, writer = await connect()
+async def register(host, port, nickname):
+    reader, writer = await connect(host, port, '')
     try:
         nickname_ask_message = await reader.readline()
         logging.debug(nickname_ask_message.decode())
@@ -60,8 +57,8 @@ async def register(nickname=""):
     return user_data
 
 
-async def connect(token=""):
-    reader, writer = await asyncio.open_connection(HOST, PORT)
+async def connect(host, port, token):
+    reader, writer = await asyncio.open_connection(host, port)
     greetings = await reader.readline()
     if not greetings:
         logging.error("Greeting message was not received.")
@@ -71,7 +68,7 @@ async def connect(token=""):
     return reader, writer
 
 
-async def send_data(writer, data=""):
+async def send_data(writer, data):
     data = data.replace("\\n", "")
     writer.write(f"{data}\n\n".encode())
     await writer.drain()
@@ -85,9 +82,15 @@ parser.add_argument(
 parser.add_argument(
     "--port", dest="port", required=False, type=int, default=5050)
 parser.add_argument(
-    "--nickname", dest="nickname", required=False, type=str, default="")
+    "--nickname", dest="nickname", required=False, type=str, default="Devman")
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    globals().update({"HOST": args.host, "PORT": args.port})
-    asyncio.run(authorise(message=args.message, nickname=args.nickname))
+    asyncio.run(
+        authorise(
+            message=args.message,
+            nickname=args.nickname,
+            host=args.host,
+            port=args.port
+        )
+    )
